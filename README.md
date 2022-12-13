@@ -12,7 +12,7 @@ The purpose of this repository is to provide example code to demonstrate how an 
 <!-- A more detailed Usage or detailed explaination of the repository here -->
 ## Usage
 
-Execute nas.yml using `ansible-playbook nas.yml` to set up a NFS server. The server is accessible by the user `nasuser` and the SMB folder exported is `/nasfolder`
+Execute nas.yml using `ansible-playbook nas.yml` to set up a SMB fileserver. The server is accessible by the user `nasuser` and the SMB folder exported is `/nasfolder`
 
 
 Key files:
