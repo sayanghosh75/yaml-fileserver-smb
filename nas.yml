@@ -1,0 +1,79 @@
+---
+
+- name: Setup a NAS server with NFS and SMB support
+  hosts: AWS_Servers
+  vars:
+    packages:
+      - samba
+      - firewalld
+
+  tasks:
+
+    - name: Check necessary packages are present
+      yum:
+        name: "{{ packages }}"
+        state: present
+
+    - name: Create group for NAS folder(s)
+      group:
+        name: nasadmins
+        state: present
+
+    - name: Create user for NAS folder(s)
+      user:
+        name: nasuser
+        create_home: no
+        password: "{{ 'nasuser' | password_hash('sha512') }}"
+        group: nasadmins
+
+#Change the path below to appropriate path
+#Update the owner and group appropriately
+#This is done for the particular machine this is targetted for
+    - name: Create the directory for the NAS mount
+      file:
+        path: /nasfolder
+        state: directory
+        owner: nasuser
+        group: nasadmins
+        mode: 0755
+
+    - name: Create user for SAMBA
+      user: 
+        name: nasadmin
+        create_home: no
+        password: "{{ 'nasadmin' | password_hash('sha512') }}"
+        group: nasadmins
+
+    - name: Update samba configuration file
+      blockinfile:
+        path: /etc/samba/smb.conf
+        block: |
+          [nasfolder]
+          comment = NAS folder shared using SMB
+          path = /nasfolder
+          read only = no
+          browsable = yes
+        state: present
+
+    - name: Enable smbd services
+      service:
+        name: "{{ item }}"
+        enabled: true
+      with_items:
+        - smbd
+
+    - name: Reload the SMBD service
+      shell: systemctl restart smbd
+
+    - name: Setup the SAMBA user and password
+      expect:
+        command: smbpasswd -a nasadmin
+        responses:
+          (?i)New SMB Password: "nasadmin"
+          (?i)Retype new SMB password: "nasadmin"
+      no_log: true
+
+    - name: Setup firewall and rules for SAMBA
+      include_tasks: smb-firewall-setup.yml
+
+...        

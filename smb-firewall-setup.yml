@@ -1,0 +1,16 @@
+---
+- name: firewalld is started
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Allow SMB service
+  firewalld:
+    service: samba
+    state: enabled
+    immediate: true
+    permanent: true
+
+...        
+
